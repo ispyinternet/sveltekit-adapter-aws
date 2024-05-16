@@ -47,6 +47,18 @@ export type AdapterOptions = {
   cdn?: boolean
 
   /**
+   * HTML fallback for SPA mode
+   * @default undefined
+   */
+  fallback?: string
+
+  /**
+   * The directory that you want to host the sveltekit server on
+   * @default undefined
+   */
+  serverDir?: string
+
+  /**
    * Environment variables to set in Lambda
    * @default undefined
    */

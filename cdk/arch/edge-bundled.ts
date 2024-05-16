@@ -13,6 +13,7 @@ import {
 import { Construct } from 'constructs'
 import {
   appPath,
+  serverPath,
   certificateArn,
   domainName,
   lambdaRuntime,
@@ -23,7 +24,7 @@ export class CDKStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props)
 
-    const edge = new aws_cloudfront.experimental.EdgeFunction(this, 'Edge', {
+    const originRequest = new aws_cloudfront.experimental.EdgeFunction(this, 'OriginRequest', {
       code: aws_lambda.Code.fromAsset('edge'),
       handler: 'server.handler',
       runtime:
@@ -36,7 +37,20 @@ export class CDKStack extends Stack {
       memorySize
     })
 
-    const cf2 = new aws_cloudfront.Function(this, 'CF2', {
+    const originResponse = new aws_cloudfront.experimental.EdgeFunction(this, 'OriginResponse', {
+      code: aws_lambda.Code.fromAsset('origin-response'),
+      handler: 'server.handler',
+      runtime:
+        lambdaRuntime === 'NODE_18'
+          ? aws_lambda.Runtime.NODEJS_18_X
+          : lambdaRuntime === 'NODE_20'
+            ? aws_lambda.Runtime.NODEJS_20_X
+            : aws_lambda.Runtime.NODEJS_LATEST,
+      timeout: Duration.seconds(30),
+      memorySize
+    })
+
+    const viewerRequest = new aws_cloudfront.Function(this, 'ViewerRequest', {
       code: aws_cloudfront.FunctionCode.fromFile({
         filePath: 'cf2/index.js'
       })
@@ -54,7 +68,7 @@ export class CDKStack extends Stack {
       origin: new aws_cloudfront_origins.S3Origin(s3),
       functionAssociations: [
         {
-          function: cf2,
+          function: viewerRequest,
           eventType: aws_cloudfront.FunctionEventType.VIEWER_REQUEST
         }
       ]
@@ -75,15 +89,25 @@ export class CDKStack extends Stack {
         allowedMethods: aws_cloudfront.AllowedMethods.ALLOW_ALL,
         edgeLambdas: [
           {
-            functionVersion: edge,
-            eventType: aws_cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
-            includeBody: true
+            functionVersion: originResponse,
+            eventType: aws_cloudfront.LambdaEdgeEventType.ORIGIN_RESPONSE
           }
         ]
       },
       httpVersion: aws_cloudfront.HttpVersion.HTTP2_AND_3,
       additionalBehaviors: {
-        [appPath]: behaviorBase
+        [appPath]: behaviorBase, 
+        [serverPath]: {
+          ...behaviorBase,
+          ...{
+              edgeLambdas: [
+                {
+                  functionVersion: originRequest,
+                  eventType: aws_cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
+                  includeBody: true
+                }
+              ]}
+          }
       }
     })
 

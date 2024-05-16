@@ -12,6 +12,8 @@ export const setup = async ({ builder, tmp, options }: Context) => {
     paths: { base }
   } = builder.config.kit
 
+  const { serverDir } = options;
+
   builder.log.minor('Setup...')
 
   const utilsPath = path.join(root, 'embed', 'external', 'utils')
@@ -45,6 +47,7 @@ export const setup = async ({ builder, tmp, options }: Context) => {
     path.join(options.out, 'package.json')
   )
 
+  
   builder.copy(
     path.resolve(cdkPath, 'mock', 'synth.ts'),
     path.join(options.out, 'bin', 'synth.ts'),
@@ -66,6 +69,7 @@ export const setup = async ({ builder, tmp, options }: Context) => {
       'false /* $$__ENABLE_CDN__$$ */': options.cdn.toString(),
       'true /* $$__ENABLE_STREAM__$$ */': options.stream.toString(),
       __APP_DIR__: appDir,
+      __SERVER_DIR__: serverDir ?? '',
       __BASE_PATH__: base,
       __BRIDGE_AUTH_TOKEN__: bridgeAuthToken,
       __DOMAIN_NAME__: options.domain?.fqdn ?? '',
@@ -82,6 +86,15 @@ export const setup = async ({ builder, tmp, options }: Context) => {
   )
 
   builder.writeServer(tmp)
+  
+  if (options.fallback) {
+    await builder.generateFallback(path.join(options.out, 's3',options.fallback));
+    builder.copy(
+      path.join(options.out, 's3',options.fallback),
+      path.join(tmp,'origin-response','index.html'),
+      {}
+    );
+  }
 
   await writeFile(
     path.join(tmp, 'manifest.js'),

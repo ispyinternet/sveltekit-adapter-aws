@@ -40,9 +40,9 @@
   "scripts": {
     "dev": "pnpm build:adapter && cd packages/site && pnpm dev",
     "build:all": "pnpm build:adapter && pnpm build:site && npx publint",
-    "build:adapter": "pnpm transpile:embed && pnpm build:cf2 && pnpm build:adapterOnly",
+    "build:adapter": "pnpm transpile:embed && pnpm build:viewer-request && pnpm build:adapterOnly",
     "build:adapterOnly": "cd packages/adapter && pnpm build",
-    "build:cf2": "npx cf2-builder cf2/src/index.ts cdk/external/cf2.js",
+    "build:viewer-request": "npx cf2-builder cf2/src/index.ts cdk/external/cf2.js",
     "transpile:embed": "cd embed && pnpm transpile",
     "build:site": "cd packages/site && pnpm build",
     "preview": "pnpm build:adapter && cd packages/site && pnpm preview",

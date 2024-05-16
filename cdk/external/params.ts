@@ -1,8 +1,10 @@
 export const appDir = '__APP_DIR__'
+export const serverDir = '__SERVER_DIR__'
 export const base = '__BASE_PATH__'
 export const domainName = '__DOMAIN_NAME__'
 export const certificateArn = '__CERTIFICATE_ARN__'
 export const appPath = `${base}/${appDir}/*`
+export const serverPath = `${base}/${serverDir}/*`
 export const memorySize = 128 /* $$__MEMORY_SIZE__$$ */
 export const environment = {} /* $$__ENVIRONMENT__$$ */
 export const cdn = false /* $$__ENABLE_CDN__$$ */
